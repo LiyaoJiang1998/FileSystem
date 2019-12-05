@@ -223,7 +223,30 @@ bool consistency_check_5(uint8_t *buffer){
 
 bool consistency_check_6(uint8_t *buffer){
     bool consistent = true;
-    // TODO
+    // For every inode, the index of its parent inode cannot be 126. Moreover, if the index of the parent inode
+    // is between 0 and 125 inclusive, then the parent inode must be in use and marked as a directory.
+    // loop through all inodes
+    for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
+        if (!consistent){
+            break;
+        }
+        if (test_bit(buffer[inode_start+5], 0)){ // in use (1)
+            uint8_t parent_dir = buffer[inode_start+7] & 127;
+            if (parent_dir == 126){
+                consistent = false;
+                continue;
+            }
+            else if ( (0<=parent_dir) && (parent_dir<=125) ){
+                size_t parent_inode_start = 16 + 8 * parent_dir;
+                if (!( (test_bit(buffer[parent_inode_start+5], 0)) && (test_bit(buffer[parent_inode_start+7], 0)) )){
+                    // must be in use and marked as dir
+                    consistent = false;
+                    continue;
+                }
+            }
+
+        }
+    }
     return consistent;
 }
 
