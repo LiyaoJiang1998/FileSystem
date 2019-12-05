@@ -1,3 +1,4 @@
+#include "FileSystem.h"
 #include <unistd.h>
 #include <linux/limits.h>
 #include <stdlib.h>
@@ -14,8 +15,11 @@
 using namespace std;
 
 uint8_t *BUFF; // pointer to the global buffer
-string *cwd_str; // global pointer to cwd string
 int MAX_BUF = 1024;
+Super_block *SUPER_BLOCK;
+string *CWD_STR; // global pointer to cwd string
+uint8_t ROOT_INDEX = 127;
+uint8_t CWD_INDEX = ROOT_INDEX;
 
 /**
  * Reused from assignment 1 starter code
@@ -263,7 +267,7 @@ void fs_mount(char *new_disk_name){
         int k = 0;
         int n = 1024;
         int fd = open(disk_path.c_str(), O_RDWR);
-        uint8_t *buffer = new uint8_t[n];
+        uint8_t *buffer = new uint8_t[n]; // consistency temp buffer
         memset(buffer, 0, n);
         lseek(fd, k , SEEK_SET);
         if(read(fd, buffer ,n)); // read [k, k+n) bytes
@@ -301,7 +305,6 @@ void fs_mount(char *new_disk_name){
             error_code = 6;
             consistent = consistency_check_6(buffer);
         }
-        delete [] buffer;
 
         if (!consistent){
             cerr << "Error: File system in " << new_disk_name << " is inconsistent (error code: " << error_code << ")" << endl;
@@ -309,9 +312,23 @@ void fs_mount(char *new_disk_name){
             cerr << "Error: No file system is mounted" << endl;
         }
         else{
-            // TODO: load the superblock
-            // TODO: set cwd_str to root
+            // load the superblock
+            for (int i=0;i<16;i++){
+                SUPER_BLOCK->free_block_list[i] = buffer[i];
+            }
+            for (int i=0;i<126;i++){
+                Inode temp_node;
+                uint8_t inode_start = 16+8*i;
+                memcpy(temp_node.name, buffer+inode_start, 5*sizeof(uint8_t));
+                temp_node.used_size = buffer[inode_start+5];
+                temp_node.start_block = buffer[inode_start+6];
+                temp_node.dir_parent = buffer[inode_start+7];
+                SUPER_BLOCK->inode[i] = temp_node;
+            }
+            // set CWD_INDEX to root
+            CWD_INDEX = ROOT_INDEX;
         }
+        delete [] buffer;
     }
 }
 
@@ -398,10 +415,10 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
 }
 
 int main(int argc, char const *argv[]){
-    cwd_str = new string(""); // TODO: global current working directory
-
+    CWD_STR = new string(""); // TODO: global current working directory
     BUFF = new uint8_t[MAX_BUF]; // clear the global buffer when program starts
     memset(BUFF, 0, MAX_BUF);
+    SUPER_BLOCK = new Super_block;
 
     int line_counter = 0; 
     string filename_str =  argv[1];
@@ -420,6 +437,6 @@ int main(int argc, char const *argv[]){
     }
 
     delete [] BUFF;
-    delete cwd_str;
+    delete CWD_STR;
     return 0;
 }
