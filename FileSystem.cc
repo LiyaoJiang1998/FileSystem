@@ -65,10 +65,10 @@ void fs_mount(char *new_disk_name){
     if (!file_exists(disk_path.c_str())){
         cerr << "Error: Cannot find disk " << new_disk_name << endl;
     } else{
-        // consistency checks
+        // TODO: consistency checks
         bool consistent = true;
         int error_code = 0;
-        // consistency check 1
+        // TODO: consistency check 1
         if (consistent){
             error_code = 1;
             // read [k, k+n) bytes
@@ -92,23 +92,23 @@ void fs_mount(char *new_disk_name){
 
             }
         }
-        // consistency check 2
+        // TODO: consistency check 2
         if (consistent){
             error_code = 2;
         }
-        // consistency check 3
+        // TODO: consistency check 3
         if (consistent){
             error_code = 3;
         }
-        // consistency check 4
+        // TODO: consistency check 4
         if (consistent){
             error_code = 4;
         }
-        // consistency check 5
+        // TODO: consistency check 5
         if (consistent){
             error_code = 5;
         }
-        // consistency check 6
+        // TODO: consistency check 6
         if (consistent){
             error_code = 6;
         }
