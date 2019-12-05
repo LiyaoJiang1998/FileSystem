@@ -44,7 +44,7 @@ std::vector<std::string> tokenize(const std::string &str, const char *delim)
 }
 
 bool check_bit(uint8_t n, int k){
-    return ((1 << n) & k);
+    return ((1 << k) & n);
 }
 
 bool file_exists(const char *filename){
@@ -66,28 +66,61 @@ void fs_mount(char *new_disk_name){
         cerr << "Error: Cannot find disk " << new_disk_name << endl;
     } else{
         // consistency checks
-        
+        bool consistent = true;
+        int error_code = 0;
         // consistency check 1
-        // read [k, k+n) bytes
-        int k = 0;
-        int n = 16;
-        int fd = open(disk_path.c_str(), O_RDWR);
-        uint8_t buffer[16];
-        lseek(fd, k , SEEK_SET);
-        if(read(fd, buffer ,n));
-        for (size_t i = 0; i < sizeof(buffer)/sizeof(buffer[0]); i++){
-            for (size_t j =0; j < 8;j++){
-                // check each bit in free-block list
-                if (check_bit(buffer[i], j) == true){
-                    // marked as in use, allocated to exactly one file
-                } else{
-                    // marked as free, cannot be allocated to any file
+        if (consistent){
+            error_code = 1;
+            // read [k, k+n) bytes
+            int k = 0;
+            int n = 16;
+            int fd = open(disk_path.c_str(), O_RDWR);
+            uint8_t buffer[16];
+            lseek(fd, k , SEEK_SET);
+            if(read(fd, buffer ,n));
+            for (size_t i = 0; i < sizeof(buffer)/sizeof(buffer[0]); i++){
+                for (size_t j =0; j < 8;j++){
+                    // check each bit in free-block list
+                    if (check_bit(buffer[i], j) == true){
+                        // marked as in use, allocated to exactly one file
+
+                    } else{
+                        // marked as free, cannot be allocated to any file
+                    }
+                    
                 }
-                
+
             }
-
         }
-
+        // consistency check 2
+        if (consistent){
+            error_code = 2;
+        }
+        // consistency check 3
+        if (consistent){
+            error_code = 3;
+        }
+        // consistency check 4
+        if (consistent){
+            error_code = 4;
+        }
+        // consistency check 5
+        if (consistent){
+            error_code = 5;
+        }
+        // consistency check 6
+        if (consistent){
+            error_code = 6;
+        }
+        if (!consistent){
+            cerr << "Error: File system in " << new_disk_name << " is inconsistent (error code: " << error_code << ")" << endl;
+            // TODO: use the last file system mounted, if no fs mounted print
+            cerr << "Error: No file system is mounted" << endl;
+        }
+        else{
+            // TODO: load the superblock
+            // TODO: set cwd_str to root
+        }
     }
 }
 
