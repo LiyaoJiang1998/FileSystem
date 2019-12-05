@@ -16,6 +16,7 @@ using namespace std;
 
 uint8_t *BUFF; // pointer to the global buffer
 int MAX_BUF = 1024;
+bool mounted = false;
 Super_block *SUPER_BLOCK;
 string *CWD_STR; // global pointer to cwd string
 uint8_t ROOT_INDEX = 127;
@@ -308,8 +309,7 @@ void fs_mount(char *new_disk_name){
 
         if (!consistent){
             cerr << "Error: File system in " << new_disk_name << " is inconsistent (error code: " << error_code << ")" << endl;
-            // TODO: use the last file system mounted, if no fs mounted print
-            cerr << "Error: No file system is mounted" << endl;
+            // use the last file system mounted
         }
         else{
             // load the superblock
@@ -325,6 +325,7 @@ void fs_mount(char *new_disk_name){
                 temp_node.dir_parent = buffer[inode_start+7];
                 SUPER_BLOCK->inode[i] = temp_node;
             }
+            mounted = true;
             // set CWD_INDEX to root
             CWD_INDEX = ROOT_INDEX;
         }
@@ -350,12 +351,16 @@ void fs_defrag(void){};
 
 void fs_cd(char name[5]){};
 
-void process_line(vector<string> token_str_vector, string filename_str, int line_counter){
+void process_line(vector<string> token_str_vector, string filename_str, int line_counter){    
     if ((token_str_vector[0].compare("M") == 0) && (token_str_vector.size() == 2)){
         fs_mount(const_cast<char*>(token_str_vector[1].c_str()));
     }
     else if ((token_str_vector[0].compare("C") == 0) && (token_str_vector.size() == 3)){
         if (token_str_vector[1].length() <= 5){
+            if (!mounted){
+                cerr << "Error: No file system is mounted" << endl;
+                return;
+            }
             fs_create(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
         } else{
             command_error(filename_str, line_counter);
@@ -363,6 +368,10 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
     }
     else if ((token_str_vector[0].compare("D") == 0) && (token_str_vector.size() == 2)){
         if (token_str_vector[1].length() <= 5){
+            if (!mounted){
+                cerr << "Error: No file system is mounted" << endl;
+                return;
+            }
             fs_delete(const_cast<char*>(token_str_vector[1].c_str()));
         } else{
             command_error(filename_str, line_counter);
@@ -370,6 +379,10 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
     }
     else if ((token_str_vector[0].compare("R") == 0) && (token_str_vector.size() == 3)){
         if ((token_str_vector[1].length() <= 5) && (atoi(token_str_vector[2].c_str())>=0) && (atoi(token_str_vector[2].c_str())<=126)){
+            if (!mounted){
+                cerr << "Error: No file system is mounted" << endl;
+                return;
+            }
             fs_read(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
         } else{
             command_error(filename_str, line_counter);
@@ -377,32 +390,56 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
     }
     else if ((token_str_vector[0].compare("W") == 0) && (token_str_vector.size() == 3)){
         if ((token_str_vector[1].length() <= 5) && (atoi(token_str_vector[2].c_str())>=0) && (atoi(token_str_vector[2].c_str())<=126)){
+            if (!mounted){
+                cerr << "Error: No file system is mounted" << endl;
+                return;
+            }
             fs_write(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
         } else{
             command_error(filename_str, line_counter);
         } 
     }
     else if ((token_str_vector[0].compare("B") == 0) && (token_str_vector.size() == 2)){
+        if (!mounted){
+            cerr << "Error: No file system is mounted" << endl;
+            return;
+        }
         uint8_t input_buff[MAX_BUF] = {0};
         string input_str = token_str_vector[1];
         copy(input_str.begin(), input_str.end(), input_buff);
         fs_buff(input_buff);
     }
     else if ((token_str_vector[0].compare("L") == 0) && (token_str_vector.size() == 1)){
+        if (!mounted){
+            cerr << "Error: No file system is mounted" << endl;
+            return;
+        }
         fs_ls();
     }
     else if ((token_str_vector[0].compare("E") == 0) && (token_str_vector.size() == 3)){
         if (token_str_vector[1].length() <= 5){
+            if (!mounted){
+                cerr << "Error: No file system is mounted" << endl;
+                return;
+            }
             fs_resize(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
         } else{
             command_error(filename_str, line_counter);
         } 
     }
     else if ((token_str_vector[0].compare("O") == 0) && (token_str_vector.size() == 1)){
+        if (!mounted){
+            cerr << "Error: No file system is mounted" << endl;
+            return;
+        }
         fs_defrag();
     }
     else if ((token_str_vector[0].compare("Y") == 0) && (token_str_vector.size() == 2)){
         if (token_str_vector[1].length() <= 5){
+            if (!mounted){
+                cerr << "Error: No file system is mounted" << endl;
+                return;
+            }
             fs_cd(const_cast<char*>(token_str_vector[1].c_str()));
         } else{
             command_error(filename_str, line_counter);
