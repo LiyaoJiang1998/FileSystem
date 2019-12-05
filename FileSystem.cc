@@ -99,6 +99,36 @@ bool consistency_check_1(uint8_t *buffer){
     return consistent;
 }
 
+bool consistency_check_2(uint8_t *buffer){
+    bool consistent = true;
+
+    return consistent;
+}
+
+bool consistency_check_3(uint8_t *buffer){
+    bool consistent = true;
+    
+    return consistent;
+}
+
+bool consistency_check_4(uint8_t *buffer){
+    bool consistent = true;
+    
+    return consistent;
+}
+
+bool consistency_check_5(uint8_t *buffer){
+    bool consistent = true;
+    
+    return consistent;
+}
+
+bool consistency_check_6(uint8_t *buffer){
+    bool consistent = true;
+    
+    return consistent;
+}
+
 void fs_mount(char *new_disk_name){
     char cwd[PATH_MAX];
     if(getcwd(cwd, PATH_MAX));
@@ -128,25 +158,30 @@ void fs_mount(char *new_disk_name){
         // TODO: consistency check 2
         if (consistent){
             error_code = 2;
-
+            consistent = consistency_check_2(buffer);
         }
         // TODO: consistency check 3
         if (consistent){
             error_code = 3;
+            consistent = consistency_check_3(buffer);
         }
         // TODO: consistency check 4
         if (consistent){
             error_code = 4;
+            consistent = consistency_check_4(buffer);
         }
         // TODO: consistency check 5
         if (consistent){
             error_code = 5;
+            consistent = consistency_check_5(buffer);
         }
         // TODO: consistency check 6
         if (consistent){
             error_code = 6;
+            consistent = consistency_check_6(buffer);
         }
         delete [] buffer;
+        
         if (!consistent){
             cerr << "Error: File system in " << new_disk_name << " is inconsistent (error code: " << error_code << ")" << endl;
             // TODO: use the last file system mounted, if no fs mounted print
