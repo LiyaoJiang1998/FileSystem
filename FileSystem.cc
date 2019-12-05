@@ -105,7 +105,7 @@ int main(int argc, char const *argv[]){
     BUFF = new uint8_t[1024]; // clear the global buffer when program starts
     memset(BUFF, 0, 1024);
 
-    int line_counter = -1; 
+    int line_counter = 0; 
     string filename_str =  argv[1];
     string line;
 
