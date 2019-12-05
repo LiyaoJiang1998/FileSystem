@@ -203,7 +203,21 @@ bool consistency_check_4(uint8_t *buffer){
 
 bool consistency_check_5(uint8_t *buffer){
     bool consistent = true;
-    // TODO
+    // The size and start block of an inode that is marked as a directory must be zero.
+    for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
+        if (!consistent){
+            break;
+        }
+        if (test_bit(buffer[inode_start+5], 0)){ // in use (1)
+            if (test_bit(buffer[inode_start+7], 0)){ // directory (1)
+                uint8_t start_block = buffer[inode_start+6];
+                uint8_t block_size = buffer[inode_start+5] & 127;
+                if ((start_block != 0) || (block_size != 0)){
+                    consistent = false;
+                }
+            }
+        }
+    }
     return consistent;
 }
 
