@@ -351,7 +351,7 @@ void fs_defrag(void){};
 
 void fs_cd(char name[5]){};
 
-void process_line(vector<string> token_str_vector, string filename_str, int line_counter){    
+void process_line(vector<string> token_str_vector, string filename_str, int line_counter, string line){    
     if ((token_str_vector[0].compare("M") == 0) && (token_str_vector.size() == 2)){
         fs_mount(const_cast<char*>(token_str_vector[1].c_str()));
     }
@@ -399,15 +399,22 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
             command_error(filename_str, line_counter);
         } 
     }
-    else if ((token_str_vector[0].compare("B") == 0) && (token_str_vector.size() == 2)){
-        if (!mounted){
-            cerr << "Error: No file system is mounted" << endl;
-            return;
+    else if ((token_str_vector[0].compare("B") == 0) && (token_str_vector.size() >= 2)){
+        // TODO: remove 0,1 ("B ") of line
+        bool up_to = true;
+        if (up_to){ // new buffer characters up to 1024
+            if (!mounted){
+                cerr << "Error: No file system is mounted" << endl;
+                return;
+            }
+            uint8_t input_buff[MAX_BUF] = {0};
+            string input_str = token_str_vector[1];
+            copy(input_str.begin(), input_str.end(), input_buff);
+            fs_buff(input_buff);
+        } else{ // more than 1024 characters are provided
+            command_error(filename_str, line_counter);
         }
-        uint8_t input_buff[MAX_BUF] = {0};
-        string input_str = token_str_vector[1];
-        copy(input_str.begin(), input_str.end(), input_buff);
-        fs_buff(input_buff);
+
     }
     else if ((token_str_vector[0].compare("L") == 0) && (token_str_vector.size() == 1)){
         if (!mounted){
@@ -468,7 +475,7 @@ int main(int argc, char const *argv[]){
             vector<string> command_str_vector;
             command_str_vector = tokenize(line, " ");
 
-            process_line(command_str_vector, filename_str, line_counter);
+            process_line(command_str_vector, filename_str, line_counter, line);
         }
         input_file.close();
     }
