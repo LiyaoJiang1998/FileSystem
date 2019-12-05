@@ -11,7 +11,6 @@ using namespace std;
 
 uint8_t *BUFF; // pointer to the global buffer
 
-
 /**
  * Reused from assignment 1 starter code
  * @brief Tokenize a string 
@@ -60,21 +59,41 @@ void fs_defrag(void){};
 
 void fs_cd(char name[5]){};
 
+void command_error(string filename_str, int line_counter){
+    cerr << "Command Error: " << filename_str << ", " << line_counter << endl;
+}
+
 void process_line(vector<string> token_str_vector, string filename_str, int line_counter){
     if ((token_str_vector[0].compare("M") == 0) && (token_str_vector.size() == 2)){
         fs_mount(const_cast<char*>(token_str_vector[1].c_str()));
     }
     else if ((token_str_vector[0].compare("C") == 0) && (token_str_vector.size() == 3)){
-        fs_create(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
+        if (token_str_vector[1].length() <= 5){
+            fs_create(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
+        } else{
+            command_error(filename_str, line_counter);
+        } 
     }
     else if ((token_str_vector[0].compare("D") == 0) && (token_str_vector.size() == 2)){
-        fs_delete(const_cast<char*>(token_str_vector[1].c_str()));
+        if (token_str_vector[1].length() <= 5){
+            fs_delete(const_cast<char*>(token_str_vector[1].c_str()));
+        } else{
+            command_error(filename_str, line_counter);
+        } 
     }
     else if ((token_str_vector[0].compare("R") == 0) && (token_str_vector.size() == 3)){
-        fs_read(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
+        if ((token_str_vector[1].length() <= 5) && (atoi(token_str_vector[2].c_str())>=0) && (atoi(token_str_vector[2].c_str())<=126)){
+            fs_read(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
+        } else{
+            command_error(filename_str, line_counter);
+        }
     }
     else if ((token_str_vector[0].compare("W") == 0) && (token_str_vector.size() == 3)){
-        fs_write(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
+        if ((token_str_vector[1].length() <= 5) && (atoi(token_str_vector[2].c_str())>=0) && (atoi(token_str_vector[2].c_str())<=126)){
+            fs_write(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
+        } else{
+            command_error(filename_str, line_counter);
+        } 
     }
     else if ((token_str_vector[0].compare("B") == 0) && (token_str_vector.size() == 2)){
         uint8_t input_buff[1024] = {0};
@@ -86,21 +105,30 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
         fs_ls();
     }
     else if ((token_str_vector[0].compare("E") == 0) && (token_str_vector.size() == 3)){
-        fs_resize(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
+        if (token_str_vector[1].length() <= 5){
+            fs_resize(const_cast<char*>(token_str_vector[1].c_str()), atoi(token_str_vector[2].c_str()));
+        } else{
+            command_error(filename_str, line_counter);
+        } 
     }
     else if ((token_str_vector[0].compare("O") == 0) && (token_str_vector.size() == 1)){
         fs_defrag();
     }
     else if ((token_str_vector[0].compare("Y") == 0) && (token_str_vector.size() == 2)){
-        fs_cd(const_cast<char*>(token_str_vector[1].c_str()));
+        if (token_str_vector[1].length() <= 5){
+            fs_cd(const_cast<char*>(token_str_vector[1].c_str()));
+        } else{
+            command_error(filename_str, line_counter);
+        } 
     }
     else{
-        cerr << "Command Error: " << filename_str << ", " << line_counter << endl;
+        // invalid command or wrong number of arguments
+        command_error(filename_str, line_counter);
     }     
 }
 
 int main(int argc, char const *argv[]){
-    string cwd = ""; // current working directory
+    string cwd = ""; // TODO: current working directory
 
     BUFF = new uint8_t[1024]; // clear the global buffer when program starts
     memset(BUFF, 0, 1024);
