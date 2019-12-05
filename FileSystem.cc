@@ -60,7 +60,7 @@ void fs_defrag(void){};
 
 void fs_cd(char name[5]){};
 
-void process_line(vector<string> token_str_vector){
+void process_line(vector<string> token_str_vector, string filename_str, int line_counter){
     if ((token_str_vector[0].compare("M") == 0) && (token_str_vector.size() == 2)){
         fs_mount(const_cast<char*>(token_str_vector[1].c_str()));
     }
@@ -93,22 +93,30 @@ void process_line(vector<string> token_str_vector){
     }
     else if ((token_str_vector[0].compare("Y") == 0) && (token_str_vector.size() == 2)){
         fs_cd(const_cast<char*>(token_str_vector[1].c_str()));
-    }    
+    }
+    else{
+        cerr << "Command Error: " << filename_str << ", " << line_counter << endl;
+    }     
 }
 
-int main(int argc, char const *argv[]){       
+int main(int argc, char const *argv[]){
     string cwd = ""; // current working directory
 
     BUFF = new uint8_t[1024]; // clear the global buffer when program starts
     memset(BUFF, 0, 1024);
+
+    int line_counter = -1; 
+    string filename_str =  argv[1];
+    string line;
+
     ifstream input_file(argv[1]);
     if (input_file.is_open()) {
-        string line;
         while (getline(input_file, line)) {
+            line_counter += 1;
             vector<string> command_str_vector;
-            printf("%s\n", line.c_str());
             command_str_vector = tokenize(line, " ");
-            process_line(command_str_vector);
+
+            process_line(command_str_vector, filename_str, line_counter);
         }
         input_file.close();
     }
