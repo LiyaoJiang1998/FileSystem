@@ -65,29 +65,55 @@ void fs_mount(char *new_disk_name){
     if (!file_exists(disk_path.c_str())){
         cerr << "Error: Cannot find disk " << new_disk_name << endl;
     } else{
+        // read superblock
+        int k = 0;
+        int n = 1024;
+        int fd = open(disk_path.c_str(), O_RDWR);
+        uint8_t buffer[1024] = {0};
+        lseek(fd, k , SEEK_SET);
+        if(read(fd, buffer ,n)); // read [k, k+n) bytes
+
         // TODO: consistency checks
         bool consistent = true;
         int error_code = 0;
-        // TODO: consistency check 1
+        // consistency check 1
         if (consistent){
             error_code = 1;
-            // read [k, k+n) bytes
-            int k = 0;
-            int n = 16;
-            int fd = open(disk_path.c_str(), O_RDWR);
-            uint8_t buffer[16];
-            lseek(fd, k , SEEK_SET);
-            if(read(fd, buffer ,n));
-            for (size_t i = 0; i < sizeof(buffer)/sizeof(buffer[0]); i++){
+            // loop through the free-block list, check each bit (block)
+            for (size_t i = 0; i < 16; i++){
+                if (!consistent) break;
                 for (size_t j =0; j < 8;j++){
-                    // check each bit in free-block list
+                    if (!consistent) break;
+                    
+                    size_t block_index = i*8 + j;
+                    // cout << "block_index= " << block_index << endl;
+                    int allocated_count = 0;
+                    // loop through all inodes, count allocated
+                    for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
+                        // cout << inode_start << endl;
+                        if (check_bit(buffer[inode_start+5], 0)){ // in use (1)
+                            if (!check_bit(buffer[inode_start+7], 0)){ // file (0)
+                                uint8_t start_block = buffer[inode_start+6];
+                                uint8_t file_size = buffer[inode_start+5] << 1 >> 1;
+                                uint8_t end_block = start_block + file_size - 1;
+                                if (start_block <= block_index && block_index <= end_block){
+                                    allocated_count += 1;
+                                }
+                            }
+                        }
+                    }
+                    cout << check_bit(buffer[i], j) << endl;
                     if (check_bit(buffer[i], j) == true){
                         // marked as in use, allocated to exactly one file
-
+                        if (allocated_count != 1){
+                            consistent = false;
+                        }
                     } else{
                         // marked as free, cannot be allocated to any file
+                        if (allocated_count != 0){
+                            consistent = false;
+                        }
                     }
-                    
                 }
 
             }
@@ -95,6 +121,7 @@ void fs_mount(char *new_disk_name){
         // TODO: consistency check 2
         if (consistent){
             error_code = 2;
+
         }
         // TODO: consistency check 3
         if (consistent){
