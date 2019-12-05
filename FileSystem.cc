@@ -59,6 +59,46 @@ void command_error(string filename_str, int line_counter){
     cerr << "Command Error: " << filename_str << ", " << line_counter << endl;
 }
 
+bool consistency_check_1(uint8_t *buffer){
+    bool consistent = true;
+    // loop through the free-block list, check each bit (block)
+    for (size_t i = 0; i < 16; i++){
+        if (!consistent) break;
+        for (size_t j =0; j < 8;j++){
+            size_t block_index = i*8 + j;
+            if (block_index == 0) continue; // skip the superblock
+            if (!consistent) break;
+            int allocated_count = 0;
+            // loop through all inodes, count allocated
+            for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
+                if (test_bit(buffer[inode_start+5], 0)){ // in use (1)
+                    if (!test_bit(buffer[inode_start+7], 0)){ // file (0)
+                        uint8_t start_block = buffer[inode_start+6];
+                        uint8_t file_size = buffer[inode_start+5] & 127;
+                        uint8_t end_block = start_block + file_size - 1;
+                        if (start_block <= block_index && block_index <= end_block){
+                            allocated_count += 1;
+                        }
+                    }
+                }
+            }
+            if (test_bit(buffer[i], j) == true){
+                // marked as in use, allocated to exactly one file
+                if (allocated_count != 1){
+                    consistent = false;
+                }
+            } else{
+                // marked as free, cannot be allocated to any file
+                if (allocated_count != 0){
+                    consistent = false;
+                }
+            }
+        }
+
+    }
+    return consistent;
+}
+
 void fs_mount(char *new_disk_name){
     char cwd[PATH_MAX];
     if(getcwd(cwd, PATH_MAX));
@@ -68,14 +108,12 @@ void fs_mount(char *new_disk_name){
     if (!file_exists(disk_path.c_str())){
         cerr << "Error: Cannot find disk " << new_disk_name << endl;
     } else{
-        // read superblock
+        // read superblock into temp buffer
         int k = 0;
         int n = 1024;
         int fd = open(disk_path.c_str(), O_RDWR);
-        uint8_t buffer[1024];
-        for (int i=0;i<1024;i++){
-            buffer[i] = 0;
-        }
+        uint8_t *buffer = new uint8_t[n];
+        memset(buffer, 0, n);
         lseek(fd, k , SEEK_SET);
         if(read(fd, buffer ,n)); // read [k, k+n) bytes
 
@@ -85,40 +123,7 @@ void fs_mount(char *new_disk_name){
         // consistency check 1
         if (consistent){
             error_code = 1;
-            // loop through the free-block list, check each bit (block)
-            for (size_t i = 0; i < 16; i++){
-                for (size_t j =0; j < 8;j++){
-                    size_t block_index = i*8 + j;
-                    if (block_index == 0) continue; // skip the superblock
-                    if (!consistent) break;
-                    int allocated_count = 0;
-                    // loop through all inodes, count allocated
-                    for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
-                        if (test_bit(buffer[inode_start+5], 0)){ // in use (1)
-                            if (!test_bit(buffer[inode_start+7], 0)){ // file (0)
-                                uint8_t start_block = buffer[inode_start+6];
-                                uint8_t file_size = buffer[inode_start+5] & 127;
-                                uint8_t end_block = start_block + file_size - 1;
-                                if (start_block <= block_index && block_index <= end_block){
-                                    allocated_count += 1;
-                                }
-                            }
-                        }
-                    }
-                    if (test_bit(buffer[i], j) == true){
-                        // marked as in use, allocated to exactly one file
-                        if (allocated_count != 1){
-                            consistent = false;
-                        }
-                    } else{
-                        // marked as free, cannot be allocated to any file
-                        if (allocated_count != 0){
-                            consistent = false;
-                        }
-                    }
-                }
-
-            }
+            consistent = consistency_check_1(buffer);
         }
         // TODO: consistency check 2
         if (consistent){
@@ -141,6 +146,7 @@ void fs_mount(char *new_disk_name){
         if (consistent){
             error_code = 6;
         }
+        delete [] buffer;
         if (!consistent){
             cerr << "Error: File system in " << new_disk_name << " is inconsistent (error code: " << error_code << ")" << endl;
             // TODO: use the last file system mounted, if no fs mounted print
