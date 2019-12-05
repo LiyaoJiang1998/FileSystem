@@ -43,8 +43,11 @@ std::vector<std::string> tokenize(const std::string &str, const char *delim)
   return tokens;
 }
 
-bool check_bit(uint8_t n, int k){
-    return ((1 << k) & n);
+/**
+ * Check for the k th bit of the uint8_t k in range [0,7]
+ **/
+bool test_bit(uint8_t n, int k){
+    return ((1 << (7-k)) & n);
 }
 
 bool file_exists(const char *filename){
@@ -69,7 +72,10 @@ void fs_mount(char *new_disk_name){
         int k = 0;
         int n = 1024;
         int fd = open(disk_path.c_str(), O_RDWR);
-        uint8_t buffer[1024] = {0};
+        uint8_t buffer[1024];
+        for (int i=0;i<1024;i++){
+            buffer[i] = 0;
+        }
         lseek(fd, k , SEEK_SET);
         if(read(fd, buffer ,n)); // read [k, k+n) bytes
 
@@ -81,20 +87,17 @@ void fs_mount(char *new_disk_name){
             error_code = 1;
             // loop through the free-block list, check each bit (block)
             for (size_t i = 0; i < 16; i++){
-                if (!consistent) break;
                 for (size_t j =0; j < 8;j++){
-                    if (!consistent) break;
-                    
                     size_t block_index = i*8 + j;
-                    // cout << "block_index= " << block_index << endl;
+                    if (block_index == 0) continue; // skip the superblock
+                    if (!consistent) break;
                     int allocated_count = 0;
                     // loop through all inodes, count allocated
                     for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
-                        // cout << inode_start << endl;
-                        if (check_bit(buffer[inode_start+5], 0)){ // in use (1)
-                            if (!check_bit(buffer[inode_start+7], 0)){ // file (0)
+                        if (test_bit(buffer[inode_start+5], 0)){ // in use (1)
+                            if (!test_bit(buffer[inode_start+7], 0)){ // file (0)
                                 uint8_t start_block = buffer[inode_start+6];
-                                uint8_t file_size = buffer[inode_start+5] << 1 >> 1;
+                                uint8_t file_size = buffer[inode_start+5] & 127;
                                 uint8_t end_block = start_block + file_size - 1;
                                 if (start_block <= block_index && block_index <= end_block){
                                     allocated_count += 1;
@@ -102,8 +105,7 @@ void fs_mount(char *new_disk_name){
                             }
                         }
                     }
-                    cout << check_bit(buffer[i], j) << endl;
-                    if (check_bit(buffer[i], j) == true){
+                    if (test_bit(buffer[i], j) == true){
                         // marked as in use, allocated to exactly one file
                         if (allocated_count != 1){
                             consistent = false;
