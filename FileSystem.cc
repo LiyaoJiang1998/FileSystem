@@ -44,6 +44,24 @@ std::vector<std::string> tokenize(const std::string &str, const char *delim)
 }
 
 /**
+ * adopted from https://www.geeksforgeeks.org/check-if-two-arrays-are-equal-or-not/
+ **/
+bool array_equal(uint8_t arr1[], uint8_t arr2[], int n, int m){ 
+    // If lengths of array are not equal means 
+    // array are not equal 
+    if (n != m) 
+        return false; 
+  
+    // compare elements 
+    for (int i = 0; i < n; i++) 
+        if (arr1[i] != arr2[i]) 
+            return false; 
+  
+    // If all elements were same. 
+    return true; 
+} 
+
+/**
  * Check for the k th bit of the uint8_t k in range [0,7]
  **/
 bool test_bit(uint8_t n, int k){
@@ -101,7 +119,35 @@ bool consistency_check_1(uint8_t *buffer){
 
 bool consistency_check_2(uint8_t *buffer){
     bool consistent = true;
-
+    // The name of every file/directory must be unique in each directory.
+    // loop through all inodes
+    for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
+        if (!consistent){
+            break;
+        }
+        if (test_bit(buffer[inode_start+5], 0)){ // in use (1)
+            uint8_t unique_name[5] = {0};
+            memcpy(unique_name, buffer+inode_start, 5*sizeof(uint8_t));
+            uint8_t unique_parent_dir = buffer[inode_start+7] & 127;
+            int name_count = 0;
+            for (size_t test_inode_start = 16; test_inode_start < 1024; test_inode_start+=8){
+                if (test_bit(buffer[test_inode_start+5], 0)){ // in use (1)
+                    uint8_t test_parent_dir = buffer[test_inode_start+7] & 127;
+                    uint8_t test_name[5] = {0};
+                    memcpy(test_name, buffer+test_inode_start, 5*sizeof(uint8_t));
+                    if (test_parent_dir & unique_parent_dir){
+                        // if have the same parent dir, name is same, add 1 to count
+                        if (array_equal(test_name, unique_name,5,5)){
+                            name_count += 1;
+                        }
+                    }
+                }
+            }
+            if (name_count != 1){
+                consistent = false;
+            }
+        }
+    }
     return consistent;
 }
 
@@ -181,7 +227,7 @@ void fs_mount(char *new_disk_name){
             consistent = consistency_check_6(buffer);
         }
         delete [] buffer;
-        
+
         if (!consistent){
             cerr << "Error: File system in " << new_disk_name << " is inconsistent (error code: " << error_code << ")" << endl;
             // TODO: use the last file system mounted, if no fs mounted print
