@@ -153,7 +153,32 @@ bool consistency_check_2(uint8_t *buffer){
 
 bool consistency_check_3(uint8_t *buffer){
     bool consistent = true;
-    // TODO
+    // If the state of an inode is free, all bits in this inode must be zero. 
+    // Otherwise, the name attribute stored in the inode must have at least one bit that is not zero.
+    // loop through all inodes
+    for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
+        if (!consistent){
+            break;
+        }
+        if (test_bit(buffer[inode_start+5], 0)){ // in use (1)
+            bool at_least_one = false;
+            for (size_t i = inode_start; i < inode_start+5; i++){
+                if (buffer[i] | 0){
+                    at_least_one = true;
+                }
+            }
+            consistent = at_least_one;
+        } else{ // free (0)
+            for (size_t i = inode_start; i < inode_start+8; i++){
+                if (buffer[i] & 255){
+                    consistent = false;
+                }
+                if (!consistent){
+                    break;
+                }
+            }
+        }
+    }
     return consistent;
 }
 
