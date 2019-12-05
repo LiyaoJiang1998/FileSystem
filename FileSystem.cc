@@ -1,3 +1,5 @@
+#include <unistd.h>
+#include <linux/limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -6,10 +8,14 @@
 #include <vector>
 #include <string>
 #include <cstring>
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 using namespace std;
 
 uint8_t *BUFF; // pointer to the global buffer
+string *cwd_str; // global pointer to cwd string
+int MAX_BUF = 1024;
 
 /**
  * Reused from assignment 1 starter code
@@ -37,8 +43,52 @@ std::vector<std::string> tokenize(const std::string &str, const char *delim)
   return tokens;
 }
 
-void fs_mount(char *new_disk_name){
+bool check_bit(uint8_t n, int k){
+    return ((1 << n) & k);
+}
 
+bool file_exists(const char *filename){
+    ifstream ifile(filename);
+    return ifile;
+}
+
+void command_error(string filename_str, int line_counter){
+    cerr << "Command Error: " << filename_str << ", " << line_counter << endl;
+}
+
+void fs_mount(char *new_disk_name){
+    char cwd[PATH_MAX];
+    if(getcwd(cwd, PATH_MAX));
+    string cwd_str(cwd);
+    string new_disk_name_str(new_disk_name);
+    string disk_path = cwd_str + "/" +new_disk_name_str;
+    if (!file_exists(disk_path.c_str())){
+        cerr << "Error: Cannot find disk " << new_disk_name << endl;
+    } else{
+        // consistency checks
+        
+        // consistency check 1
+        // read [k, k+n) bytes
+        int k = 0;
+        int n = 16;
+        int fd = open(disk_path.c_str(), O_RDWR);
+        uint8_t buffer[16];
+        lseek(fd, k , SEEK_SET);
+        if(read(fd, buffer ,n));
+        for (size_t i = 0; i < sizeof(buffer)/sizeof(buffer[0]); i++){
+            for (size_t j =0; j < 8;j++){
+                // check each bit in free-block list
+                if (check_bit(buffer[i], j) == true){
+                    // marked as in use, allocated to exactly one file
+                } else{
+                    // marked as free, cannot be allocated to any file
+                }
+                
+            }
+
+        }
+
+    }
 }
 
 void fs_create(char name[5], int size){};
@@ -58,10 +108,6 @@ void fs_resize(char name[5], int new_size){};
 void fs_defrag(void){};
 
 void fs_cd(char name[5]){};
-
-void command_error(string filename_str, int line_counter){
-    cerr << "Command Error: " << filename_str << ", " << line_counter << endl;
-}
 
 void process_line(vector<string> token_str_vector, string filename_str, int line_counter){
     if ((token_str_vector[0].compare("M") == 0) && (token_str_vector.size() == 2)){
@@ -96,7 +142,7 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
         } 
     }
     else if ((token_str_vector[0].compare("B") == 0) && (token_str_vector.size() == 2)){
-        uint8_t input_buff[1024] = {0};
+        uint8_t input_buff[MAX_BUF] = {0};
         string input_str = token_str_vector[1];
         copy(input_str.begin(), input_str.end(), input_buff);
         fs_buff(input_buff);
@@ -128,10 +174,10 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
 }
 
 int main(int argc, char const *argv[]){
-    string cwd = ""; // TODO: current working directory
+    cwd_str = new string(""); // TODO: global current working directory
 
-    BUFF = new uint8_t[1024]; // clear the global buffer when program starts
-    memset(BUFF, 0, 1024);
+    BUFF = new uint8_t[MAX_BUF]; // clear the global buffer when program starts
+    memset(BUFF, 0, MAX_BUF);
 
     int line_counter = 0; 
     string filename_str =  argv[1];
@@ -150,5 +196,6 @@ int main(int argc, char const *argv[]){
     }
 
     delete [] BUFF;
+    delete cwd_str;
     return 0;
 }
