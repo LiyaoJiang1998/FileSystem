@@ -184,7 +184,20 @@ bool consistency_check_3(uint8_t *buffer){
 
 bool consistency_check_4(uint8_t *buffer){
     bool consistent = true;
-    // TODO
+    // The start block of every inode that is marked as a file must have a value between 1 and 127 inclusive.
+    for (size_t inode_start = 16; inode_start < 1024; inode_start+=8){
+        if (!consistent){
+            break;
+        }
+        if (test_bit(buffer[inode_start+5], 0)){ // in use (1)
+            if (!test_bit(buffer[inode_start+7], 0)){ // file (0)
+                uint8_t start_block = buffer[inode_start+6];
+                if (!( (1<=start_block) && (start_block<=127) )){
+                    consistent = false;
+                }
+            }
+        }
+    }
     return consistent;
 }
 
