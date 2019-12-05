@@ -153,25 +153,25 @@ bool consistency_check_2(uint8_t *buffer){
 
 bool consistency_check_3(uint8_t *buffer){
     bool consistent = true;
-    
+    // TODO
     return consistent;
 }
 
 bool consistency_check_4(uint8_t *buffer){
     bool consistent = true;
-    
+    // TODO
     return consistent;
 }
 
 bool consistency_check_5(uint8_t *buffer){
     bool consistent = true;
-    
+    // TODO
     return consistent;
 }
 
 bool consistency_check_6(uint8_t *buffer){
     bool consistent = true;
-    
+    // TODO
     return consistent;
 }
 
@@ -193,7 +193,7 @@ void fs_mount(char *new_disk_name){
         lseek(fd, k , SEEK_SET);
         if(read(fd, buffer ,n)); // read [k, k+n) bytes
 
-        // TODO: consistency checks
+        // consistency checks
         bool consistent = true;
         int error_code = 0;
         // consistency check 1
@@ -201,27 +201,27 @@ void fs_mount(char *new_disk_name){
             error_code = 1;
             consistent = consistency_check_1(buffer);
         }
-        // TODO: consistency check 2
+        // consistency check 2
         if (consistent){
             error_code = 2;
             consistent = consistency_check_2(buffer);
         }
-        // TODO: consistency check 3
+        // consistency check 3
         if (consistent){
             error_code = 3;
             consistent = consistency_check_3(buffer);
         }
-        // TODO: consistency check 4
+        // consistency check 4
         if (consistent){
             error_code = 4;
             consistent = consistency_check_4(buffer);
         }
-        // TODO: consistency check 5
+        // consistency check 5
         if (consistent){
             error_code = 5;
             consistent = consistency_check_5(buffer);
         }
-        // TODO: consistency check 6
+        // consistency check 6
         if (consistent){
             error_code = 6;
             consistent = consistency_check_6(buffer);
