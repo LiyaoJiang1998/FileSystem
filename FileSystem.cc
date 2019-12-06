@@ -95,37 +95,6 @@ void write_superblock_to_disk(){
 }
 
 /**
- * Zero out a specific data block, update the free-block list in memory
- **/
-void flush_block_free(int block_index){
-    int k = block_index*1024;
-    int n = 1024;
-    int fd = open(mounted_disk_path.c_str(), O_RDWR);
-    uint8_t *buffer = new uint8_t[n]; // temp buffer
-    memset(buffer, 0, n);
-    lseek(fd, k , SEEK_SET);
-    if(write(fd, buffer ,n)); // write [k, k+n) bytes
-    delete[] buffer;
-    // update Superblock free block list
-    uint8_t free_block_i = block_index / 8;
-    uint8_t free_block_j = block_index % 8;
-    // set the bit to 0 indicate block is free
-    SUPER_BLOCK->free_block_list[free_block_i] = SUPER_BLOCK->free_block_list[free_block_i] & ~(1 << (7-free_block_j));
-}
-
-/**
- * zero out the inode with inode_index in memory
- **/
-void flush_inode(int inode_index){
-    for (int name_i=0;name_i<5;name_i++){
-        SUPER_BLOCK->inode[inode_index].name[name_i] = 0;
-    }
-    SUPER_BLOCK->inode[inode_index].used_size = 0;
-    SUPER_BLOCK->inode[inode_index].start_block = 0;
-    SUPER_BLOCK->inode[inode_index].dir_parent = 0;
-}
-
-/**
  * Check for the k th bit of the uint8_t k in range [0,7]
  **/
 bool test_bit(uint8_t n, int k){
@@ -521,6 +490,41 @@ void fs_create(char name[5], int size){
 
 }
 
+/**
+ * Zero out a specific data block, update the free-block list in memory
+ **/
+void flush_block_free(int block_index){
+    int k = block_index*1024;
+    int n = 1024;
+    int fd = open(mounted_disk_path.c_str(), O_RDWR);
+    uint8_t *buffer = new uint8_t[n]; // temp buffer
+    memset(buffer, 0, n);
+    lseek(fd, k , SEEK_SET);
+    if(write(fd, buffer ,n)); // write [k, k+n) bytes
+    delete[] buffer;
+    // update Superblock free block list
+    uint8_t free_block_i = block_index / 8;
+    uint8_t free_block_j = block_index % 8;
+    // set the bit to 0 indicate block is free
+    SUPER_BLOCK->free_block_list[free_block_i] = SUPER_BLOCK->free_block_list[free_block_i] & ~(1 << (7-free_block_j));
+}
+
+/**
+ * zero out the inode with inode_index in memory
+ **/
+void flush_inode(int inode_index){
+    for (int name_i=0;name_i<5;name_i++){
+        SUPER_BLOCK->inode[inode_index].name[name_i] = 0;
+    }
+    SUPER_BLOCK->inode[inode_index].used_size = 0;
+    SUPER_BLOCK->inode[inode_index].start_block = 0;
+    SUPER_BLOCK->inode[inode_index].dir_parent = 0;
+}
+
+void recursive_delete_dir(int parent_dir_index){
+    
+}
+
 void fs_delete(char name[5]){
     // TODO
     // check name exist
@@ -536,7 +540,7 @@ void fs_delete(char name[5]){
             if (strcmp(name, casted_name) == 0){
                 // name is same
                 if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir, recursive delete
-
+                    recursive_delete_dir(i);
                 } else{ // inode is file, delete
                     // zero out data blocks, update free_block_list
                     uint8_t block_start = SUPER_BLOCK->inode[i].start_block;
