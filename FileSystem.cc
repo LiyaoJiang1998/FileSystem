@@ -18,9 +18,10 @@ uint8_t *BUFF; // pointer to the global buffer
 int MAX_BUF = 1024;
 bool mounted = false;
 Super_block *SUPER_BLOCK;
-string *CWD_STR; // global pointer to cwd string
+string CWD_STR;
 uint8_t ROOT_INDEX = 127;
 uint8_t CWD_INDEX = ROOT_INDEX;
+string mounted_disk_path;
 
 /**
  * Reused from assignment 1 starter code
@@ -326,6 +327,7 @@ void fs_mount(char *new_disk_name){
                 SUPER_BLOCK->inode[i] = temp_node;
             }
             mounted = true;
+            mounted_disk_path = disk_path;
             // set CWD_INDEX to root
             CWD_INDEX = ROOT_INDEX;
         }
@@ -488,7 +490,8 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
 }
 
 int main(int argc, char const *argv[]){
-    CWD_STR = new string(""); // TODO: global current working directory
+    CWD_STR = ""; // TODO: global current working directory
+    mounted_disk_path = "";
     BUFF = new uint8_t[MAX_BUF]; // clear the global buffer when program starts
     memset(BUFF, 0, MAX_BUF);
     SUPER_BLOCK = new Super_block;
@@ -510,6 +513,5 @@ int main(int argc, char const *argv[]){
     }
 
     delete [] BUFF;
-    delete CWD_STR;
     return 0;
 }
