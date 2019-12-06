@@ -14,7 +14,7 @@ C_OBJECTS = $(C_SOURCES:%.c=%.o)
 CC_OBJECTS = $(CC_SOURCES:%.cc=%.o)
 OBJECTS = $(C_OBJECTS) $(CC_OBJECTS)
 
-SUBMISSION_FILES = FileSystem.h FileSystem.cc Makefile readme.md
+SUBMISSION_FILES = create_fs FileSystem.h FileSystem.cc Makefile readme.md
 .PHONY: all clean
 
 fs: $(OBJECTS) $(HEADERS)
