@@ -521,12 +521,28 @@ void flush_inode(int inode_index){
     SUPER_BLOCK->inode[inode_index].dir_parent = 0;
 }
 
-void recursive_delete_dir(int parent_dir_index){
-    
+void recursive_delete_dir(uint8_t parent_dir_index){
+    flush_inode(parent_dir_index);
+    for (int i=0; i<126;i++){
+        if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (parent_dir_index | 128)){
+            // this inode has parent dir same as input
+            if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir, recursive delete
+                recursive_delete_dir(i);
+            } else{ // otherwise, node i is a file
+                // zero out data blocks, update free_block_list
+                uint8_t block_start = SUPER_BLOCK->inode[i].start_block;
+                uint8_t block_size = SUPER_BLOCK->inode[i].used_size & 127;
+                for(uint8_t block_i = block_start; block_i< block_start+block_size; block_i++){
+                    flush_block_free(block_i);
+                }
+                // zero out inode 
+                flush_inode(i);
+            }
+        }
+    }
 }
 
 void fs_delete(char name[5]){
-    // TODO
     // check name exist
     if (!name_exist(name)){ // if name not exist in cwd
         cerr << "Error: File or directory " << name << " does not exist" << endl;
