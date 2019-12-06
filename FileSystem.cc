@@ -21,6 +21,7 @@ Super_block *SUPER_BLOCK;
 string CWD_STR;
 uint8_t ROOT_INDEX = 127;
 uint8_t CWD_INDEX = ROOT_INDEX;
+string mounted_disk_name;
 string mounted_disk_path;
 
 /**
@@ -328,6 +329,7 @@ void fs_mount(char *new_disk_name){
             }
             mounted = true;
             mounted_disk_path = disk_path;
+            mounted_disk_name = new_disk_name_str;
             // set CWD_INDEX to root
             CWD_INDEX = ROOT_INDEX;
             CWD_STR = "/root/";
@@ -336,8 +338,77 @@ void fs_mount(char *new_disk_name){
     }
 }
 
+/**
+ *  helper for fs_create, check if name exists in cwd
+ **/
+bool name_exist(char name[5]){
+    if ( strcmp(name, "..")==0 || strcmp(name, ".")==0){ // reserved names
+        return true;
+    }
+    for (int i=0; i<126;i++){
+        if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
+            // this inode has parent dir same as cwd
+            if (strcmp(name, SUPER_BLOCK->inode[i].name) == 0){
+                return true; // name is same
+            }
+        }
+    }
+    return false;
+}
+
+bool inode_available(){
+    for (int i=0; i<126;i++){
+        if (test_bit(SUPER_BLOCK->inode[i].used_size, 0)==false){
+            return true;
+        }
+    }
+    return false;
+}
+
+uint8_t available_blocks(int size){
+    uint8_t available_block_start = 0; // 0 represents not enough blocks
+
+    return available_block_start;
+}
+
 void fs_create(char name[5], int size){
     // TODO
+    // check inode availability
+    if (!inode_available()){
+        cerr << "Error: Superblock in disk " << mounted_disk_name << " is full, cannot create " << name << endl;
+        return;
+    }
+    // check name unique
+    if (name_exist(name)){ // if name already exist in cwd
+        cerr << "Error: File or directory " << name << " already exists" << endl;
+        return;
+    }
+    if (size == 0){
+        // create directory
+        for (int i=0; i<126;i++){
+            if (test_bit(SUPER_BLOCK->inode[i].used_size, 0)==false){
+                // found a free inode, use it
+                for (int name_i=0; name_i<5; name_i++){
+                    SUPER_BLOCK->inode[i].name[name_i] = name[name_i];
+                }
+                SUPER_BLOCK->inode[i].used_size = 128; // in use(1), dir(0000000)
+                SUPER_BLOCK->inode[i].start_block = 0; // dir 0
+                SUPER_BLOCK->inode[i].dir_parent = CWD_INDEX | 128;
+            }
+        }
+    }
+    else{
+        // check available contiguous free blocks
+        uint8_t start_block = available_blocks(size);
+        if (start_block == 0){ //not enough contiguous free blocks
+            cerr << "Error: Cannot allocate " << size << " on " << mounted_disk_name << endl;
+            return;
+        }
+        // no error, create file
+        for (int i; i<16;i++){
+            // SUPER_BLOCK->free_block_list[i];
+        }
+    }
 
 };
 
@@ -494,6 +565,7 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
 int main(int argc, char const *argv[]){
     CWD_STR = ""; // TODO: global current working directory
     mounted_disk_path = "";
+    mounted_disk_name = "";
     BUFF = new uint8_t[MAX_BUF]; // clear the global buffer when program starts
     memset(BUFF, 0, MAX_BUF);
     SUPER_BLOCK = new Super_block;
