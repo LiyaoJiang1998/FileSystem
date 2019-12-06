@@ -68,11 +68,14 @@ bool array_equal(uint8_t arr1[], uint8_t arr2[], int n, int m){
     return true; 
 } 
 
+/**
+ * Update the superblock in disk with the one in memory
+ **/
 void write_superblock_to_disk(){
     int k = 0;
     int n = 1024;
     int fd = open(mounted_disk_path.c_str(), O_RDWR);
-    uint8_t *buffer = new uint8_t[n]; // consistency temp buffer
+    uint8_t *buffer = new uint8_t[n]; // temp buffer
     memset(buffer, 0, n);
     for (int i = 0; i < 16; i++){
         buffer[i] = SUPER_BLOCK->free_block_list[i];
@@ -87,7 +90,21 @@ void write_superblock_to_disk(){
         buffer[inode_start+7] = SUPER_BLOCK->inode[i].dir_parent;
     }
     lseek(fd, k , SEEK_SET);
-    if(write(fd, buffer ,n)); // read [k, k+n) bytes
+    if(write(fd, buffer ,n)); // write [k, k+n) bytes
+    delete[] buffer;
+}
+
+/**
+ * Zero out a specific data block
+ **/
+void flush_block(int block_index){
+    int k = block_index*1024;
+    int n = 1024;
+    int fd = open(mounted_disk_path.c_str(), O_RDWR);
+    uint8_t *buffer = new uint8_t[n]; // temp buffer
+    memset(buffer, 0, n);
+    lseek(fd, k , SEEK_SET);
+    if(write(fd, buffer ,n)); // write [k, k+n) bytes
     delete[] buffer;
 }
 
