@@ -619,15 +619,42 @@ void fs_read(char name[5], int block_num){
                 int n = 1024;
                 int fd = open(mounted_disk_path.c_str(), O_RDWR);
                 lseek(fd, k , SEEK_SET);
-                if(read(fd, BUFF ,n)); // write [k, k+n) bytes
+                if(read(fd, BUFF ,n)); // read [k, k+n) bytes
             }
         }
     }
 }
 
 void fs_write(char name[5], int block_num){
-    // TODO
-};
+    if(!file_exist(name)){
+        cerr << "Error: File " << name << " does not exist" << endl;
+        return;
+    }
+    for (int i=0; i<126;i++){
+        if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
+            // this inode has parent dir same as cwd
+            char casted_name[5];
+            cast_inode_name(i, casted_name);
+            if (strcmp(name, casted_name) == 0){
+                // name is same
+                uint8_t file_size = SUPER_BLOCK->inode[i].used_size & 127;
+                if (!((0<=block_num)&&(block_num<=file_size-1))){
+                    cerr << "Error: " << name << " does not have block " << block_num << endl;
+                    return;
+                }
+                // no more error, write to the block
+                uint8_t file_start = SUPER_BLOCK->inode[i].start_block;
+                uint8_t block_index = file_start + block_num;
+
+                int k = block_index*1024;
+                int n = 1024;
+                int fd = open(mounted_disk_path.c_str(), O_RDWR);
+                lseek(fd, k , SEEK_SET);
+                if(write(fd, BUFF ,n)); // write [k, k+n) bytes
+            }
+        }
+    }
+}
 
 void fs_buff(uint8_t buff[1024]){
     memset(BUFF, 0, MAX_BUF); // flush the buffer with 0
@@ -635,23 +662,23 @@ void fs_buff(uint8_t buff[1024]){
     for (int i=0; i<MAX_BUF;i++){
         BUFF[i] = buff[i];
     }
-};
+}
 
 void fs_ls(void){
     // TODO
-};
+}
 
 void fs_resize(char name[5], int new_size){
     // TODO
-};
+}
 
 void fs_defrag(void){
     // TODO
-};
+}
 
 void fs_cd(char name[5]){
     // TODO
-};
+}
 
 void process_line(vector<string> token_str_vector, string filename_str, int line_counter, string line){    
     if ((token_str_vector[0].compare("M") == 0) && (token_str_vector.size() == 2)){
