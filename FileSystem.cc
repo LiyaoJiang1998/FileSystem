@@ -68,6 +68,29 @@ bool array_equal(uint8_t arr1[], uint8_t arr2[], int n, int m){
     return true; 
 } 
 
+void write_superblock_to_disk(){
+    int k = 0;
+    int n = 1024;
+    int fd = open(mounted_disk_path.c_str(), O_RDWR);
+    uint8_t *buffer = new uint8_t[n]; // consistency temp buffer
+    memset(buffer, 0, n);
+    for (int i = 0; i < 16; i++){
+        buffer[i] = SUPER_BLOCK->free_block_list[i];
+    }
+    for (int i = 0; i <126; i++){
+        uint8_t inode_start = 16 + i*8;
+        for (int name_i=0;name_i<5;name_i++){
+            buffer[inode_start+name_i] = SUPER_BLOCK->inode[i].name[name_i];
+        }
+        buffer[inode_start+5] = SUPER_BLOCK->inode[i].used_size;
+        buffer[inode_start+6] = SUPER_BLOCK->inode[i].start_block;
+        buffer[inode_start+7] = SUPER_BLOCK->inode[i].dir_parent;
+    }
+    lseek(fd, k , SEEK_SET);
+    if(write(fd, buffer ,n)); // read [k, k+n) bytes
+    delete[] buffer;
+}
+
 /**
  * Check for the k th bit of the uint8_t k in range [0,7]
  **/
@@ -427,6 +450,7 @@ void fs_create(char name[5], int size){
                 SUPER_BLOCK->inode[i].used_size = 128; // in use(1), dir(0000000)
                 SUPER_BLOCK->inode[i].start_block = 0; // dir 0
                 SUPER_BLOCK->inode[i].dir_parent = CWD_INDEX | 128;
+                write_superblock_to_disk();
                 return;
             }
         }
@@ -455,20 +479,41 @@ void fs_create(char name[5], int size){
                     size_t index_j = index % 8;
                     SUPER_BLOCK->free_block_list[index_i] = SUPER_BLOCK->free_block_list[index_i] | (1 << (7-index_j));
                 }
+                write_superblock_to_disk();
                 return;
             }
         }
     }
 
-};
+}
 
 void fs_delete(char name[5]){
     // TODO
-};
+    // check name exist
+    if (!name_exist(name)){ // if name not exist in cwd
+        cerr << "Error: File or directory " << name << " does not exist" << endl;
+        return;
+    }
+    for (int i=0; i<126;i++){
+        if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
+            // this inode has parent dir same as cwd
+            char casted_name[5];
+            cast_inode_name(i, casted_name);
+            if (strcmp(name, casted_name) == 0){
+                // name is same
+                if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){
+                    // inode is dir, recursive delete
+                } else{
+                    // inode is file, delete
+                }
+            }
+        }
+    }
+}
 
 void fs_read(char name[5], int block_num){
     // TODO
-};
+}
 
 void fs_write(char name[5], int block_num){
     // TODO
