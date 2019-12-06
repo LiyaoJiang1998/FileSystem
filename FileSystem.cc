@@ -330,6 +330,7 @@ void fs_mount(char *new_disk_name){
             mounted_disk_path = disk_path;
             // set CWD_INDEX to root
             CWD_INDEX = ROOT_INDEX;
+            CWD_STR = "/root/";
         }
         delete [] buffer;
     }
@@ -337,6 +338,7 @@ void fs_mount(char *new_disk_name){
 
 void fs_create(char name[5], int size){
     // TODO
+
 };
 
 void fs_delete(char name[5]){
