@@ -723,7 +723,36 @@ void fs_defrag(void){
 }
 
 void fs_cd(char name[5]){
-    // TODO
+    if (strncmp(name, "..", 5)==0){
+        if (CWD_INDEX == ROOT_INDEX){
+            CWD_INDEX = CWD_INDEX;
+        } else{
+            CWD_INDEX = SUPER_BLOCK->inode[CWD_INDEX].dir_parent & 127;
+        }
+    }
+    else if (strncmp(name, ".", 5)==0){
+        CWD_INDEX = CWD_INDEX;
+    }
+    else{
+        // child dirs and files
+        for (int i=0; i<126;i++){
+            if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
+                // this inode has parent dir same as cwd (child file/dir)
+                char child_name[5];
+                cast_inode_name(i, child_name);
+                if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir
+                    if (strncmp(name, child_name, 5) == 0){ // dir with same name as input
+                        CWD_INDEX = i;
+                        return;
+                    }
+                } else{ // inode is file
+                    cerr << "Error: Directory " << name << " does not exist" << endl;
+                    return;
+                }
+            }
+        }
+        cerr << "Error: Directory " << name << " does not exist" << endl;
+    }
 }
 
 void process_line(vector<string> token_str_vector, string filename_str, int line_counter, string line){    
