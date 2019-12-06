@@ -378,7 +378,7 @@ void cast_inode_name(int i, char* casted_name){
  *  helper for fs_create, check if name exists in cwd
  **/
 bool name_exist(char name[5]){
-    if ( strcmp(name, "..")==0 || strcmp(name, ".")==0){ // reserved names
+    if ( strncmp(name, "..", 5)==0 || strncmp(name, ".", 5)==0){ // reserved names
         return true;
     }
     for (int i=0; i<126;i++){
@@ -386,7 +386,7 @@ bool name_exist(char name[5]){
             // this inode has parent dir same as cwd
             char casted_name[5];
             cast_inode_name(i, casted_name);
-            if (strcmp(name, casted_name) == 0){
+            if (strncmp(name, casted_name, 5) == 0){
                 return true; // name is same
             }
         }
@@ -553,7 +553,7 @@ void fs_delete(char name[5]){
             // this inode has parent dir same as cwd
             char casted_name[5];
             cast_inode_name(i, casted_name);
-            if (strcmp(name, casted_name) == 0){
+            if (strncmp(name, casted_name, 5) == 0){
                 // name is same
                 if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir, recursive delete
                     recursive_delete_dir(i);
@@ -578,7 +578,7 @@ void fs_delete(char name[5]){
  *  helper for fs_read, check if file with name exists in cwd
  **/
 bool file_exist(char name[5]){
-    if ( strcmp(name, "..")==0 || strcmp(name, ".")==0){ // reserved names
+    if ( strncmp(name, "..", 5)==0 || strncmp(name, ".", 5)==0){ // reserved names
         return false; // cannot read from these
     }
     for (int i=0; i<126;i++){
@@ -586,7 +586,7 @@ bool file_exist(char name[5]){
             // this inode has parent dir same as cwd
             char casted_name[5];
             cast_inode_name(i, casted_name);
-            if (strcmp(name, casted_name) == 0){
+            if (strncmp(name, casted_name, 5) == 0){
                 return true; // name is same
             }
         }
@@ -604,7 +604,7 @@ void fs_read(char name[5], int block_num){
             // this inode has parent dir same as cwd
             char casted_name[5];
             cast_inode_name(i, casted_name);
-            if (strcmp(name, casted_name) == 0){
+            if (strncmp(name, casted_name, 5) == 0){
                 // name is same
                 uint8_t file_size = SUPER_BLOCK->inode[i].used_size & 127;
                 if (!((0<=block_num)&&(block_num<=file_size-1))){
@@ -635,7 +635,7 @@ void fs_write(char name[5], int block_num){
             // this inode has parent dir same as cwd
             char casted_name[5];
             cast_inode_name(i, casted_name);
-            if (strcmp(name, casted_name) == 0){
+            if (strncmp(name, casted_name, 5) == 0){
                 // name is same
                 uint8_t file_size = SUPER_BLOCK->inode[i].used_size & 127;
                 if (!((0<=block_num)&&(block_num<=file_size-1))){
