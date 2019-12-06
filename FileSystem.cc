@@ -400,16 +400,23 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
         } 
     }
     else if ((token_str_vector[0].compare("B") == 0) && (token_str_vector.size() >= 2)){
-        // TODO: remove 0,1 ("B ") of line
+        // remove 0,1 ("B ") of line to get characters
         bool up_to = true;
+        size_t pos = line.find(token_str_vector[1]);
+        string characters = line.substr(pos);
+        if (characters.length()<=1024){
+            up_to = true;
+        } else{
+            up_to = false;
+        }
+        
         if (up_to){ // new buffer characters up to 1024
             if (!mounted){
                 cerr << "Error: No file system is mounted" << endl;
                 return;
             }
             uint8_t input_buff[MAX_BUF] = {0};
-            string input_str = token_str_vector[1];
-            copy(input_str.begin(), input_str.end(), input_buff);
+            copy(characters.begin(), characters.end(), input_buff);
             fs_buff(input_buff);
         } else{ // more than 1024 characters are provided
             command_error(filename_str, line_counter);
