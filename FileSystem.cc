@@ -721,7 +721,7 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
 }
 
 int main(int argc, char const *argv[]){
-    CWD_STR = ""; // TODO: global current working directory
+    CWD_STR = ""; // global current working directory
     mounted_disk_path = "";
     mounted_disk_name = "";
     BUFF = new uint8_t[MAX_BUF]; // clear the global buffer when program starts
