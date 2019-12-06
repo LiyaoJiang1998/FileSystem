@@ -398,6 +398,10 @@ uint8_t available_blocks(int size){
             }
         }
     }
+    if (block_count >= size){
+        available_start = block_start;
+        return available_start;
+    }
     return available_start;
 }
 
