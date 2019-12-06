@@ -81,7 +81,7 @@ void write_superblock_to_disk(){
         buffer[i] = SUPER_BLOCK->free_block_list[i];
     }
     for (int i = 0; i <126; i++){
-        uint8_t inode_start = 16 + i*8;
+        int inode_start = 16 + i*8;
         for (int name_i=0;name_i<5;name_i++){
             buffer[inode_start+name_i] = SUPER_BLOCK->inode[i].name[name_i];
         }
@@ -91,6 +91,7 @@ void write_superblock_to_disk(){
     }
     lseek(fd, k , SEEK_SET);
     if(write(fd, buffer ,n)); // write [k, k+n) bytes
+    close(fd);
     delete[] buffer;
 }
 
@@ -300,6 +301,7 @@ void fs_mount(char *new_disk_name){
         memset(buffer, 0, n);
         lseek(fd, k , SEEK_SET);
         if(read(fd, buffer ,n)); // read [k, k+n) bytes
+        close(fd);
 
         // consistency checks
         bool consistent = true;
@@ -346,7 +348,7 @@ void fs_mount(char *new_disk_name){
             }
             for (int i=0;i<126;i++){
                 Inode temp_node;
-                uint8_t inode_start = 16+8*i;
+                int inode_start = 16+8*i;
                 memcpy(temp_node.name, buffer+inode_start, 5*sizeof(uint8_t));
                 temp_node.used_size = buffer[inode_start+5];
                 temp_node.start_block = buffer[inode_start+6];
@@ -501,6 +503,7 @@ void flush_block_free(int block_index){
     memset(buffer, 0, n);
     lseek(fd, k , SEEK_SET);
     if(write(fd, buffer ,n)); // write [k, k+n) bytes
+    close(fd);
     delete[] buffer;
     // update Superblock free block list
     uint8_t free_block_i = block_index / 8;
@@ -620,6 +623,7 @@ void fs_read(char name[5], int block_num){
                 int fd = open(mounted_disk_path.c_str(), O_RDWR);
                 lseek(fd, k , SEEK_SET);
                 if(read(fd, BUFF ,n)); // read [k, k+n) bytes
+                close(fd);
             }
         }
     }
@@ -651,6 +655,7 @@ void fs_write(char name[5], int block_num){
                 int fd = open(mounted_disk_path.c_str(), O_RDWR);
                 lseek(fd, k , SEEK_SET);
                 if(write(fd, BUFF ,n)); // write [k, k+n) bytes
+                close(fd);
             }
         }
     }
