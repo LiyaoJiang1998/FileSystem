@@ -668,8 +668,50 @@ void fs_buff(uint8_t buff[1024]){
 }
 
 void fs_ls(void){
-    // TODO
+    int current_dir_size = 2; // the default . and .. diretories 
+    for (int i=0; i<126;i++){
+        if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
+            // this inode has parent dir same as cwd
+            current_dir_size += 1;
+        }
+    }
+    printf("%-5s %3d\n", ".", current_dir_size); // current dir .
     
+    int parent_dir_size = 2;
+    if (CWD_INDEX == 127){
+        parent_dir_size = current_dir_size;
+    }else{
+        int parent_dir_index = SUPER_BLOCK->inode[CWD_INDEX].dir_parent & 127;
+        for (int i=0; i<126;i++){
+            if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (parent_dir_index | 128)){
+                // this inode has parent dir same as parent_dir_index
+                parent_dir_size += 1;
+            }
+        }
+    }
+    printf("%-5s %3d\n", "..", parent_dir_size); // parent dir ..
+    
+    // child dirs and files
+    for (int i=0; i<126;i++){
+        if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
+            // this inode has parent dir same as cwd (child file/dir)
+            char child_name[5];
+            cast_inode_name(i, child_name);
+            if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir
+                int child_dir_size = 2;
+                for (int j=0; j<126;j++){
+                    if ((SUPER_BLOCK->inode[j].dir_parent | 128) == (i | 128)){
+                        // this inode has parent dir same as cwd
+                        child_dir_size += 1;
+                    }
+                }
+                printf("%-5s %3d\n", child_name, child_dir_size); // child dir
+            } else{ // inode is file
+                int child_file_size = SUPER_BLOCK->inode[i].used_size & 127;
+                printf("%-5s %3d KB\n", child_name, child_file_size); // child file
+            }
+        }
+    }
 }
 
 void fs_resize(char name[5], int new_size){
