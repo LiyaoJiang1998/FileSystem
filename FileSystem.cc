@@ -333,13 +333,21 @@ void fs_mount(char *new_disk_name){
     }
 }
 
-void fs_create(char name[5], int size){};
+void fs_create(char name[5], int size){
+    // TODO
+};
 
-void fs_delete(char name[5]){};
+void fs_delete(char name[5]){
+    // TODO
+};
 
-void fs_read(char name[5], int block_num){};
+void fs_read(char name[5], int block_num){
+    // TODO
+};
 
-void fs_write(char name[5], int block_num){};
+void fs_write(char name[5], int block_num){
+    // TODO
+};
 
 void fs_buff(uint8_t buff[1024]){
     memset(BUFF, 0, MAX_BUF); // flush the buffer with 0
@@ -349,13 +357,21 @@ void fs_buff(uint8_t buff[1024]){
     }
 };
 
-void fs_ls(void){};
+void fs_ls(void){
+    // TODO
+};
 
-void fs_resize(char name[5], int new_size){};
+void fs_resize(char name[5], int new_size){
+    // TODO
+};
 
-void fs_defrag(void){};
+void fs_defrag(void){
+    // TODO
+};
 
-void fs_cd(char name[5]){};
+void fs_cd(char name[5]){
+    // TODO
+};
 
 void process_line(vector<string> token_str_vector, string filename_str, int line_counter, string line){    
     if ((token_str_vector[0].compare("M") == 0) && (token_str_vector.size() == 2)){
