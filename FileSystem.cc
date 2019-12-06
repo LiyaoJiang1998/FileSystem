@@ -739,14 +739,14 @@ void fs_cd(char name[5]){
                 // this inode has parent dir same as cwd (child file/dir)
                 char child_name[5];
                 cast_inode_name(i, child_name);
-                if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir
-                    if (strncmp(name, child_name, 5) == 0){ // dir with same name as input
+                if (strncmp(name, child_name, 5) == 0){ // dir/file same name as input
+                    if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir
                         CWD_INDEX = i;
                         return;
+                    } else{ // inode is file
+                        cerr << "Error: Directory " << name << " does not exist" << endl;
+                        return;
                     }
-                } else{ // inode is file
-                    cerr << "Error: Directory " << name << " does not exist" << endl;
-                    return;
                 }
             }
         }
