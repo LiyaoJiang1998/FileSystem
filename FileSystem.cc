@@ -366,9 +366,27 @@ bool inode_available(){
 }
 
 uint8_t available_blocks(int size){
-    uint8_t available_block_start = 0; // 0 represents not enough blocks
+    uint8_t available_start = 0; // 0 represents not enough blocks
+    uint8_t block_start = 0;
+    int block_count = 0;
 
-    return available_block_start;
+    for (size_t i = 0; i < 16; i++){
+        for (size_t j =0; j < 8;j++){
+            size_t block_index = i*8 + j;
+            if (block_count >= size){
+                available_start = block_start;
+                return available_start;
+            }
+            if (!test_bit(SUPER_BLOCK->free_block_list[i], j)){ // if this block is free
+                block_count += 1;
+            }
+            else{ // if this block is not free
+                block_start = block_index+1;
+                block_count = 0;
+            }
+        }
+    }
+    return available_start;
 }
 
 void fs_create(char name[5], int size){
