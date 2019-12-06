@@ -460,7 +460,7 @@ void fs_create(char name[5], int size){
     }
     else{
         // check available contiguous free blocks
-        uint8_t start_block = available_blocks(size);
+        int start_block = available_blocks(size);
         if (start_block == 0){ //not enough contiguous free blocks
             cerr << "Error: Cannot allocate " << size << " on " << mounted_disk_name << endl;
             return;
@@ -472,14 +472,13 @@ void fs_create(char name[5], int size){
                 for (int name_i=0; name_i<5; name_i++){
                     SUPER_BLOCK->inode[i].name[name_i] = name[name_i];
                 }
-                uint8_t casted_size = size;
-                SUPER_BLOCK->inode[i].used_size = casted_size | 128; // in use(1), filesize
+                SUPER_BLOCK->inode[i].used_size = size | 128; // in use(1), filesize
                 SUPER_BLOCK->inode[i].start_block = start_block; // use the start_block found available
                 SUPER_BLOCK->inode[i].dir_parent = CWD_INDEX & 127;
                 // set the free_block_list used blocks bit to 1
-                for (uint8_t index=start_block; index < start_block+casted_size; index++){
-                    size_t index_i = index / 8;
-                    size_t index_j = index % 8;
+                for (int index=start_block; index < start_block+size; index++){
+                    int index_i = index / 8;
+                    int index_j = index % 8;
                     SUPER_BLOCK->free_block_list[index_i] = SUPER_BLOCK->free_block_list[index_i] | (1 << (7-index_j));
                 }
                 write_superblock_to_disk();
