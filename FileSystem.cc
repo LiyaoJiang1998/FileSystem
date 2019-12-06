@@ -390,7 +390,6 @@ uint8_t available_blocks(int size){
 }
 
 void fs_create(char name[5], int size){
-    // TODO
     // check inode availability
     if (!inode_available()){
         cerr << "Error: Superblock in disk " << mounted_disk_name << " is full, cannot create " << name << endl;
@@ -423,8 +422,23 @@ void fs_create(char name[5], int size){
             return;
         }
         // no error, create file
-        for (int i; i<16;i++){
-            // SUPER_BLOCK->free_block_list[i];
+        for (int i=0; i<126;i++){
+            if (test_bit(SUPER_BLOCK->inode[i].used_size, 0)==false){
+                // found a free inode, use it
+                for (int name_i=0; name_i<5; name_i++){
+                    SUPER_BLOCK->inode[i].name[name_i] = name[name_i];
+                }
+                uint8_t casted_size = size;
+                SUPER_BLOCK->inode[i].used_size = casted_size | 128; // in use(1), filesize
+                SUPER_BLOCK->inode[i].start_block = start_block; // use the start_block found available
+                SUPER_BLOCK->inode[i].dir_parent = CWD_INDEX & 127;
+                // set the free_block_list used blocks bit to 1
+                for (uint8_t index=start_block; index < start_block+casted_size; index++){
+                    size_t i = index / 8;
+                    size_t j = index % 8;
+                    SUPER_BLOCK->free_block_list[i] = SUPER_BLOCK->free_block_list[i] | (1 << (7-j));
+                }
+            }
         }
     }
 
