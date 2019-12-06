@@ -341,7 +341,13 @@ void fs_read(char name[5], int block_num){};
 
 void fs_write(char name[5], int block_num){};
 
-void fs_buff(uint8_t buff[1024]){};
+void fs_buff(uint8_t buff[1024]){
+    memset(BUFF, 0, MAX_BUF); // flush the buffer with 0
+    // write new characters to BUFF
+    for (int i=0; i<MAX_BUF;i++){
+        BUFF[i] = buff[i];
+    }
+};
 
 void fs_ls(void){};
 
