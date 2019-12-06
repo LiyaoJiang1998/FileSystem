@@ -339,6 +339,16 @@ void fs_mount(char *new_disk_name){
 }
 
 /**
+ * Usage:   char casted_name[5]; // out parameter
+ *          cast_inode_name(i, casted_name);
+ **/
+void cast_inode_name(int i, char* casted_name){
+    for (int name_i=0; name_i<5; name_i++){
+        casted_name[name_i] = SUPER_BLOCK->inode[i].name[name_i];
+    }
+}
+
+/**
  *  helper for fs_create, check if name exists in cwd
  **/
 bool name_exist(char name[5]){
@@ -348,7 +358,9 @@ bool name_exist(char name[5]){
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
             // this inode has parent dir same as cwd
-            if (strcmp(name, SUPER_BLOCK->inode[i].name) == 0){
+            char casted_name[5];
+            cast_inode_name(i, casted_name);
+            if (strcmp(name, casted_name) == 0){
                 return true; // name is same
             }
         }
@@ -411,6 +423,7 @@ void fs_create(char name[5], int size){
                 SUPER_BLOCK->inode[i].used_size = 128; // in use(1), dir(0000000)
                 SUPER_BLOCK->inode[i].start_block = 0; // dir 0
                 SUPER_BLOCK->inode[i].dir_parent = CWD_INDEX | 128;
+                return;
             }
         }
     }
@@ -434,10 +447,11 @@ void fs_create(char name[5], int size){
                 SUPER_BLOCK->inode[i].dir_parent = CWD_INDEX & 127;
                 // set the free_block_list used blocks bit to 1
                 for (uint8_t index=start_block; index < start_block+casted_size; index++){
-                    size_t i = index / 8;
-                    size_t j = index % 8;
-                    SUPER_BLOCK->free_block_list[i] = SUPER_BLOCK->free_block_list[i] | (1 << (7-j));
+                    size_t index_i = index / 8;
+                    size_t index_j = index % 8;
+                    SUPER_BLOCK->free_block_list[index_i] = SUPER_BLOCK->free_block_list[index_i] | (1 << (7-index_j));
                 }
+                return;
             }
         }
     }
