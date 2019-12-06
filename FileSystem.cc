@@ -18,7 +18,6 @@ uint8_t *BUFF; // pointer to the global buffer
 int MAX_BUF = 1024;
 bool mounted = false;
 Super_block *SUPER_BLOCK;
-string CWD_STR;
 uint8_t ROOT_INDEX = 127;
 uint8_t CWD_INDEX = ROOT_INDEX;
 string mounted_disk_name;
@@ -360,7 +359,6 @@ void fs_mount(char *new_disk_name){
             mounted_disk_name = new_disk_name_str;
             // set CWD_INDEX to root
             CWD_INDEX = ROOT_INDEX;
-            CWD_STR = "root";
         }
         delete [] buffer;
     }
@@ -671,6 +669,7 @@ void fs_buff(uint8_t buff[1024]){
 
 void fs_ls(void){
     // TODO
+    
 }
 
 void fs_resize(char name[5], int new_size){
@@ -800,7 +799,6 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
 }
 
 int main(int argc, char const *argv[]){
-    CWD_STR = ""; // global current working directory
     mounted_disk_path = "";
     mounted_disk_name = "";
     BUFF = new uint8_t[MAX_BUF]; // clear the global buffer when program starts
