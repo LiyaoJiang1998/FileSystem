@@ -832,8 +832,46 @@ void fs_resize(char name[5], int new_size){
 }
 
 void fs_defrag(void){
-    // TODO
-
+    // go through free block list, find the file that has smallest start_block
+    // move it to the smallest free data block
+    int smallest_free_block = 0;
+    int smallest_start_block = 0;
+    for (int i = 0; i < 16; i++){
+        for (int j =0; j < 8;j++){
+            int block_index = i*8 + j;
+            if (smallest_free_block != 0){ // need to find free_block first
+                if ((test_bit(SUPER_BLOCK->free_block_list[i], j)) && smallest_start_block==0){ // found file with smallest start_block
+                    smallest_start_block = block_index;
+                    // both free_block and start_block are found
+                }
+            }
+            if ((!test_bit(SUPER_BLOCK->free_block_list[i], j)) && smallest_free_block==0){ // found a free block
+                smallest_free_block = block_index;
+                // free block is found, start to find start block
+            }
+        }
+    }
+    if (smallest_start_block == 0){
+        // no more fragmentation
+        return;
+    } else{
+        // found fragmentation
+        int file_to_move = 0;
+        int file_size = 0;
+        // loop through inodes to find which file the smallest_start_block belongs to
+        for (int index=0; index<126; index++){
+            int start = SUPER_BLOCK->inode[index].start_block;
+            int size = SUPER_BLOCK->inode[index].used_size & 127;
+            int end = start+size-1;
+            if ((start<=smallest_start_block) && (smallest_start_block<=end)){
+                file_to_move = index;
+                file_size = size;
+                break;
+            }
+        }
+        move_file(file_to_move, smallest_start_block, file_size, smallest_free_block, file_size);
+        fs_defrag(); // recursion to find more fragmentation
+    }
 }
 
 void fs_cd(char name[5]){
