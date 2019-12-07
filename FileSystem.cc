@@ -714,7 +714,6 @@ void fs_ls(void){
 }
 
 void fs_resize(char name[5], int new_size){
-    // TODO
     // child dirs and files
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
@@ -742,7 +741,39 @@ void fs_resize(char name[5], int new_size){
                         return;
                     }
                     else{ // new_size > current_size
-                        // TODO
+                        // check enough free blocks after
+                        int block_start = SUPER_BLOCK->inode[i].start_block + current_size;
+                        int block_count = 0;
+                        for (int freeblock_i = 0; freeblock_i < 16; freeblock_i++){
+                            for (int freeblock_j =0; freeblock_j < 8;freeblock_j++){
+                                int block_index = freeblock_i*8 + freeblock_j;
+                                if (block_index < block_start){
+                                    continue;
+                                } else{
+                                    if (block_count >= new_size-current_size){
+                                        // found enough blocks after
+                                        // set bits in the free block list
+                                        for (int new_block=block_start;new_block<block_start+block_count;new_block++){
+                                            int new_freeblock_i = new_block / 8;
+                                            int new_freeblock_j = new_block % 8;
+                                            SUPER_BLOCK->free_block_list[new_freeblock_i] = SUPER_BLOCK->free_block_list[new_freeblock_i] | (1 << (7-new_freeblock_j));
+                                        }
+                                        // update inode size
+                                        SUPER_BLOCK->inode[i].used_size = new_size | 128;
+                                        write_superblock_to_disk();
+                                        return;
+                                    }
+                                    if (!test_bit(SUPER_BLOCK->free_block_list[freeblock_i], freeblock_j)){ // if this block is free
+                                        block_count += 1;
+                                    }
+                                    else{
+                                        // not enough blocks
+                                        // TODO
+                                    }
+                                }
+                            }
+                        }
+
                     }
                 }
             }
