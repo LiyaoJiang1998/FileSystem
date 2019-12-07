@@ -715,6 +715,40 @@ void fs_ls(void){
 
 void fs_resize(char name[5], int new_size){
     // TODO
+    // child dirs and files
+    for (int i=0; i<126;i++){
+        if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
+            // this inode has parent dir same as cwd (child file/dir)
+            char child_name[5];
+            cast_inode_name(i, child_name);
+            if (strncmp(name, child_name, 5) == 0){ // dir/file same name as input
+                if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir
+                    cerr << "Error: File " << name << " does not exist" << endl;
+                    return;
+                } else{ // inode is file
+                    // found the file at i
+                    int current_size = SUPER_BLOCK->inode[i].used_size & 127;
+                    if (new_size == current_size){
+                        return;
+                    }
+                    else if (new_size < current_size){
+                        int tail_block = SUPER_BLOCK->inode[i].start_block + current_size - 1;
+                        int new_tail_block = SUPER_BLOCK->inode[i].start_block + new_size - 1;
+                        for (int block_index=tail_block; block_index>new_tail_block; block_index--){
+                            flush_block_free(block_index); // zero out the block clear freeblock list bit
+                        }
+                        SUPER_BLOCK->inode[i].used_size = new_size | 128; // set inode size to new size
+                        write_superblock_to_disk();
+                        return;
+                    }
+                    else{ // new_size > current_size
+                        // TODO
+                    }
+                }
+            }
+        }
+    }
+    cerr << "Error: File " << name << " does not exist" << endl;
 }
 
 void fs_defrag(void){
