@@ -1045,5 +1045,6 @@ int main(int argc, char const *argv[]){
     }
 
     delete [] BUFF;
+    delete SUPER_BLOCK;
     return 0;
 }
