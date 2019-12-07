@@ -713,6 +713,44 @@ void fs_ls(void){
     }
 }
 
+void move_file(int file_index, int current_start_block, int current_size, int new_start_block, int new_size){
+    // copy old to new
+    for (int i_block = 0; i_block<current_size; i_block++){
+        int block_to_read = current_start_block + i_block;
+        int block_to_write = new_start_block + i_block;
+        // read the data block into buffer
+        int k = block_to_read*1024;
+        int n = 1024;
+        int fd = open(mounted_disk_path.c_str(), O_RDWR);
+        uint8_t *buffer = new uint8_t[n]; // temp buffer
+        memset(buffer, 0, n);
+        lseek(fd, k , SEEK_SET);
+        if(read(fd, buffer ,n)); // read [k, k+n) bytes
+        close(fd);
+        // write the temp buffer to new data block
+        k = block_to_write*1024;
+        n = 1024;
+        fd = open(mounted_disk_path.c_str(), O_RDWR);
+        lseek(fd, k , SEEK_SET);
+        if(write(fd, buffer ,n)); // write [k, k+n) bytes
+        close(fd);
+        delete[] buffer;
+        // flush the old data block and free the free block list bit
+        flush_block_free(block_to_read);
+    }
+    // set new data blocks to in use
+    for (int i_use=new_start_block; i_use<new_start_block+new_size; i_use++){
+        int new_freeblock_i = i_use / 8;
+        int new_freeblock_j = i_use % 8;
+        SUPER_BLOCK->free_block_list[new_freeblock_i] = SUPER_BLOCK->free_block_list[new_freeblock_i] | (1 << (7-new_freeblock_j));
+    }
+    // update file inode
+    SUPER_BLOCK->inode[file_index].used_size = new_size | 128;
+    SUPER_BLOCK->inode[file_index].start_block = new_start_block;
+    // write superblock to disk
+    write_superblock_to_disk();
+}
+
 void fs_resize(char name[5], int new_size){
     // child dirs and files
     for (int i=0; i<126;i++){
@@ -768,7 +806,16 @@ void fs_resize(char name[5], int new_size){
                                     }
                                     else{
                                         // not enough blocks
-                                        // TODO
+                                        // check available contiguous free blocks
+                                        int new_start_block = available_blocks(new_size);
+                                        if (new_start_block == 0){ //not enough contiguous free blocks
+                                            cerr << "Error: File " << name << " cannot expand to size " << new_size << endl;
+                                            return;
+                                        }
+                                        // no error, move file
+                                        int current_start_block = SUPER_BLOCK->inode[i].start_block;
+                                        move_file(i, current_start_block, current_size, new_start_block, new_size);
+                                        return;
                                     }
                                 }
                             }
