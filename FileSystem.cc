@@ -369,13 +369,14 @@ void fs_mount(char *new_disk_name){
 }
 
 /**
- * Usage:   char casted_name[5]; // out parameter
+ * Usage:   char casted_name[6]; // out parameter
  *          cast_inode_name(i, casted_name);
  **/
 void cast_inode_name(int i, char* casted_name){
     for (int name_i=0; name_i<5; name_i++){
         casted_name[name_i] = SUPER_BLOCK->inode[i].name[name_i];
     }
+    casted_name[5]='\0';
 }
 
 /**
@@ -388,7 +389,7 @@ bool name_exist(char name[5]){
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
             // this inode has parent dir same as cwd
-            char casted_name[5];
+            char casted_name[6];
             cast_inode_name(i, casted_name);
             if (strncmp(name, casted_name, 5) == 0){
                 return true; // name is same
@@ -555,7 +556,7 @@ void fs_delete(char name[5]){
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
             // this inode has parent dir same as cwd
-            char casted_name[5];
+            char casted_name[6];
             cast_inode_name(i, casted_name);
             if (strncmp(name, casted_name, 5) == 0){
                 // name is same
@@ -588,7 +589,7 @@ bool file_exist(char name[5]){
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
             // this inode has parent dir same as cwd
-            char casted_name[5];
+            char casted_name[6];
             cast_inode_name(i, casted_name);
             if (strncmp(name, casted_name, 5) == 0){
                 return true; // name is same
@@ -606,7 +607,7 @@ void fs_read(char name[5], int block_num){
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
             // this inode has parent dir same as cwd
-            char casted_name[5];
+            char casted_name[6];
             cast_inode_name(i, casted_name);
             if (strncmp(name, casted_name, 5) == 0){
                 // name is same
@@ -638,7 +639,7 @@ void fs_write(char name[5], int block_num){
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
             // this inode has parent dir same as cwd
-            char casted_name[5];
+            char casted_name[6];
             cast_inode_name(i, casted_name);
             if (strncmp(name, casted_name, 5) == 0){
                 // name is same
@@ -698,7 +699,7 @@ void fs_ls(void){
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
             // this inode has parent dir same as cwd (child file/dir)
-            char child_name[5];
+            char child_name[6];
             cast_inode_name(i, child_name);
             if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir
                 int child_dir_size = 2;
@@ -762,7 +763,7 @@ void fs_resize(char name[5], int new_size){
     for (int i=0; i<126;i++){
         if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
             // this inode has parent dir same as cwd (child file/dir)
-            char child_name[5];
+            char child_name[6];
             cast_inode_name(i, child_name);
             if (strncmp(name, child_name, 5) == 0){ // dir/file same name as input
                 if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir
@@ -894,7 +895,7 @@ void fs_cd(char name[5]){
         for (int i=0; i<126;i++){
             if ((SUPER_BLOCK->inode[i].dir_parent | 128) == (CWD_INDEX | 128)){
                 // this inode has parent dir same as cwd (child file/dir)
-                char child_name[5];
+                char child_name[6];
                 cast_inode_name(i, child_name);
                 if (strncmp(name, child_name, 5) == 0){ // dir/file same name as input
                     if (test_bit(SUPER_BLOCK->inode[i].dir_parent, 0)){ // inode is dir
