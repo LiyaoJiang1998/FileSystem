@@ -727,6 +727,10 @@ void move_file(int file_index, int current_start_block, int current_size, int ne
         lseek(fd, k , SEEK_SET);
         if(read(fd, buffer ,n)); // read [k, k+n) bytes
         close(fd);
+        
+        // flush the old data block and free the free block list bit
+        flush_block_free(block_to_read);
+
         // write the temp buffer to new data block
         k = block_to_write*1024;
         n = 1024;
@@ -735,8 +739,6 @@ void move_file(int file_index, int current_start_block, int current_size, int ne
         if(write(fd, buffer ,n)); // write [k, k+n) bytes
         close(fd);
         delete[] buffer;
-        // flush the old data block and free the free block list bit
-        flush_block_free(block_to_read);
     }
     // set new data blocks to in use
     for (int i_use=new_start_block; i_use<new_start_block+new_size; i_use++){
@@ -831,6 +833,7 @@ void fs_resize(char name[5], int new_size){
 
 void fs_defrag(void){
     // TODO
+
 }
 
 void fs_cd(char name[5]){
