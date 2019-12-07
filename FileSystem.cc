@@ -917,7 +917,7 @@ void process_line(vector<string> token_str_vector, string filename_str, int line
         fs_mount(const_cast<char*>(token_str_vector[1].c_str()));
     }
     else if ((token_str_vector[0].compare("C") == 0) && (token_str_vector.size() == 3)){
-        if (token_str_vector[1].length() <= 5){
+        if (token_str_vector[1].length() <= 5 && (0<=atoi(token_str_vector[2].c_str()) && atoi(token_str_vector[2].c_str())<=127) ){
             if (!mounted){
                 cerr << "Error: No file system is mounted" << endl;
                 return;
